@@ -293,8 +293,32 @@ import { createClient } from '@neondatabase/neon-js';
     clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
   }
 
+  function exportWorkoutsCsv() {
+    const headers = ['Date', 'Workout type', 'Duration (minutes)', 'Notes'];
+    const csvCell = (value) => {
+      let text = value == null ? '' : String(value);
+      if (/^[\t\r\n ]*[=+\-@]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const rows = [...workouts]
+      .sort((a, b) => a.date.localeCompare(b.date) || Number(a.createdAt || 0) - Number(b.createdAt || 0))
+      .map((workout) => [workout.date, workout.type, workout.duration, workout.notes]);
+    const csv = [headers, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `repcount-workouts-${dateKey(localToday())}.csv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(`Exported ${workouts.length} workout${workouts.length === 1 ? '' : 's'} to CSV`);
+  }
+
   $('#addWorkout').addEventListener('click', () => openDialog());
   $('#nudgeLog').addEventListener('click', () => openDialog());
+  $('#exportCsv').addEventListener('click', exportWorkoutsCsv);
   $('#closeDialog').addEventListener('click', () => dialog.close());
   dialog.addEventListener('click', (event) => { if (event.target === dialog) dialog.close(); });
   $('#viewAll').addEventListener('click', () => {

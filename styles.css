@@ -27,3 +27,6 @@
 .weekday-chart-fill{display:block;height:100%;min-width:0;border-radius:6px;background:linear-gradient(90deg,#a9cda8,#367d4a);transition:width .2s ease}
 .weekday-chart-count{text-align:right;color:#39443a;font:600 11px var(--display)}
 @media(max-width:560px){.weekday-card{padding:18px 14px}.weekday-chart-row{grid-template-columns:68px minmax(0,1fr) 28px;gap:8px}.weekday-chart-day,.weekday-chart-count{font-size:10px}}
+
+.activity-actions{display:flex;align-items:center;gap:12px;white-space:nowrap}
+@media(max-width:560px){.activity-actions{gap:7px}.activity-actions .text-button{font-size:9px}}
