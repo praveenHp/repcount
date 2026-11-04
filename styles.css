@@ -17,3 +17,13 @@
 .month-bar-fill{display:block;width:100%;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,#79ad7c,#367d4a);transition:height .2s ease}
 .month-bar-label{overflow:hidden;text-align:center;color:#7d877d;font-size:9px;line-height:16px}
 @media(max-width:560px){.monthly-card{padding:18px 14px}.monthly-chart{gap:4px}.month-bar-label{font-size:8px}.month-bar-value{font-size:9px}}
+
+.weekday-card{margin-top:17px;padding:24px 25px;background:var(--white);border:1px solid #edf0ea;border-radius:11px}
+.weekday-chart-note{margin:5px 0 0;color:#8a9289;font-size:11px}
+.weekday-chart{display:grid;gap:11px;margin-top:20px;max-width:720px}
+.weekday-chart-row{display:grid;grid-template-columns:88px minmax(0,1fr) 34px;gap:12px;align-items:center}
+.weekday-chart-day{color:#647064;font-size:11px}
+.weekday-chart-track{height:12px;overflow:hidden;border-radius:6px;background:#f0f3ee}
+.weekday-chart-fill{display:block;height:100%;min-width:0;border-radius:6px;background:linear-gradient(90deg,#a9cda8,#367d4a);transition:width .2s ease}
+.weekday-chart-count{text-align:right;color:#39443a;font:600 11px var(--display)}
+@media(max-width:560px){.weekday-card{padding:18px 14px}.weekday-chart-row{grid-template-columns:68px minmax(0,1fr) 28px;gap:8px}.weekday-chart-day,.weekday-chart-count{font-size:10px}}

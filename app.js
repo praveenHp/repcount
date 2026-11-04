@@ -217,6 +217,30 @@ import { createClient } from '@neondatabase/neon-js';
     $('#monthlyPeriod').textContent = `${firstMonth} — ${lastMonth}`;
   }
 
+  function renderWeekdayChart() {
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const counts = Array(7).fill(0);
+    for (const workout of workouts) {
+      const mondayFirstDay = (parseDate(workout.date).getDay() + 6) % 7;
+      counts[mondayFirstDay]++;
+    }
+    const maxCount = Math.max(1, ...counts);
+    const chart = $('#weekdayChart');
+    chart.innerHTML = '';
+    days.forEach((day, index) => {
+      const count = counts[index];
+      const row = document.createElement('div');
+      row.className = 'weekday-chart-row';
+      row.setAttribute('role', 'listitem');
+      row.setAttribute('aria-label', `${day}: ${count} workout${count === 1 ? '' : 's'}`);
+      row.innerHTML = '<span class="weekday-chart-day"></span><span class="weekday-chart-track" aria-hidden="true"><span class="weekday-chart-fill"></span></span><span class="weekday-chart-count"></span>';
+      row.querySelector('.weekday-chart-day').textContent = day;
+      row.querySelector('.weekday-chart-count').textContent = count;
+      row.querySelector('.weekday-chart-fill').style.width = count ? `${(count / maxCount) * 100}%` : '0';
+      chart.append(row);
+    });
+  }
+
   function renderRecent() {
     const list = $('#recentList');
     const heading = $('.activity-card .card-heading h2');
@@ -257,7 +281,7 @@ import { createClient } from '@neondatabase/neon-js';
     }
   }
 
-  function render() { renderHeatmap(); renderStats(); renderMonthlyChart(); renderRecent(); }
+  function render() { renderHeatmap(); renderStats(); renderMonthlyChart(); renderWeekdayChart(); renderRecent(); }
   function openDialog(date = dateKey(localToday())) {
     $('#workoutDate').value = date;
     $('#workoutDate').max = dateKey(localToday());
