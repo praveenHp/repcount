@@ -21,13 +21,18 @@ import { createClient } from '@neondatabase/neon-js';
   function formatDate(key, options = { month: 'short', day: 'numeric', year: 'numeric' }) { return parseDate(key).toLocaleDateString(undefined, options); }
   function byDate() {
     const map = new Map();
-    for (const workout of workouts) map.set(workout.date, (map.get(workout.date) || 0) + Number(workout.duration));
+    for (const workout of workouts) {
+      const day = map.get(workout.date) || { minutes: 0, sessions: 0 };
+      day.minutes += Number(workout.duration || 0);
+      day.sessions++;
+      map.set(workout.date, day);
+    }
     return map;
   }
-  function levelFor(minutes) { if (!minutes) return 0; if (minutes < 30) return 1; if (minutes < 60) return 2; if (minutes < 90) return 3; return 4; }
+  function levelFor(minutes, sessions) { if (!sessions) return 0; if (minutes < 30) return 1; if (minutes < 60) return 2; if (minutes < 90) return 3; return 4; }
 
   function fromDatabase(row) {
-    return { id: row.id, date: row.date, type: row.workout_type, duration: Number(row.duration), notes: row.notes || '', createdAt: new Date(row.created_at).getTime() || 0 };
+    return { id: row.id, date: row.date, type: row.workout_type, duration: row.duration == null ? null : Number(row.duration), notes: row.notes || '', createdAt: new Date(row.created_at).getTime() || 0 };
   }
 
   function sessionFrom(result) {
@@ -130,13 +135,15 @@ import { createClient } from '@neondatabase/neon-js';
         const date = shiftDay(gridStart, week * 7 + weekday);
         const key = dateKey(date);
         const inRange = date >= firstDay && date <= today;
-        const minutes = totals.get(key) || 0;
+        const activity = totals.get(key) || { minutes: 0, sessions: 0 };
+        const minutes = activity.minutes;
         const cell = document.createElement('button');
         cell.type = 'button';
-        cell.className = `cell level-${levelFor(minutes)}${inRange ? '' : ' outside'}${date > today ? ' future' : ''}${selectedDate === key ? ' selected' : ''}`;
+        cell.className = `cell level-${levelFor(minutes, activity.sessions)}${inRange ? '' : ' outside'}${date > today ? ' future' : ''}${selectedDate === key ? ' selected' : ''}`;
         cell.setAttribute('role', 'gridcell');
-        cell.setAttribute('aria-label', inRange ? `${formatDate(key)}: ${minutes ? `${minutes} minutes trained` : 'no workout'}` : 'Outside the displayed year');
-        cell.title = inRange ? `${formatDate(key)} · ${minutes ? `${minutes} min` : 'Rest day'}` : '';
+        const activityLabel = activity.sessions ? `${minutes ? `${minutes} minutes trained` : 'workout logged, duration not set'}` : 'no workout';
+        cell.setAttribute('aria-label', inRange ? `${formatDate(key)}: ${activityLabel}` : 'Outside the displayed year');
+        cell.title = inRange ? `${formatDate(key)} · ${activity.sessions ? (minutes ? `${minutes} min` : 'Duration not set') : 'Rest day'}` : '';
         cell.addEventListener('click', () => {
           if (!inRange) return;
           selectedDate = selectedDate === key ? null : key;
@@ -173,7 +180,7 @@ import { createClient } from '@neondatabase/neon-js';
     const firstDay = shiftDay(today, -364);
     const yearWorkouts = workouts.filter((item) => parseDate(item.date) >= firstDay && parseDate(item.date) <= today);
     const days = new Set(yearWorkouts.map((item) => item.date));
-    const minutes = workouts.reduce((sum, item) => sum + Number(item.duration), 0);
+    const minutes = workouts.reduce((sum, item) => sum + Number(item.duration || 0), 0);
     const streak = streaks();
     $('#daysStat').textContent = days.size;
     $('#streakStat').textContent = streak.current;
@@ -210,7 +217,7 @@ import { createClient } from '@neondatabase/neon-js';
       row.innerHTML = `<span class="session-mark" aria-hidden="true">${icon}</span><div class="session-info"><div class="session-title"></div><div class="session-meta"></div></div><span class="session-duration"></span><button class="session-delete" type="button" aria-label="Delete session">×</button>`;
       row.querySelector('.session-title').textContent = workout.type || 'Workout';
       row.querySelector('.session-meta').textContent = `${formatDate(workout.date)}${workout.notes ? ` · ${workout.notes}` : ''}`;
-      row.querySelector('.session-duration').textContent = `${workout.duration} min`;
+      row.querySelector('.session-duration').textContent = workout.duration == null ? 'Time not set' : `${workout.duration} min`;
       row.querySelector('.session-delete').addEventListener('click', async () => {
         const { error } = await neon.from('workouts').delete().eq('id', workout.id);
         if (error) { showToast('Could not remove this session.'); return; }
@@ -284,16 +291,17 @@ import { createClient } from '@neondatabase/neon-js';
     event.preventDefault();
     const data = new FormData(form);
     const date = data.get('date');
-    const duration = Number(data.get('duration'));
+    const durationValue = data.get('duration');
+    const duration = durationValue === '' ? null : Number(durationValue);
     if (!date || date > dateKey(localToday())) { $('#formError').textContent = 'Choose today or an earlier date.'; return; }
-    if (!Number.isInteger(duration) || duration < 1 || duration > 600) { $('#formError').textContent = 'Enter a duration between 1 and 600 minutes.'; return; }
+    if (duration !== null && (!Number.isInteger(duration) || duration < 1 || duration > 600)) { $('#formError').textContent = 'Enter a duration between 1 and 600 minutes, or leave it blank.'; return; }
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     try {
       const { data: rows, error } = await neon.from('workouts').insert({ date, workout_type: data.get('type'), duration, notes: String(data.get('notes') || '').trim() }).select('id,date,workout_type,duration,notes,created_at');
       if (error) throw error;
       workouts.push(...(rows || []).map(fromDatabase));
-      selectedDate = null; showAll = false; dialog.close(); form.reset(); $('#workoutDuration').value = 45;
+      selectedDate = null; showAll = false; dialog.close(); form.reset();
       render(); showToast('Workout saved. Nice work showing up.');
     } catch (error) {
       $('#formError').textContent = error.message || 'Could not save this session. Check your Neon setup.';
