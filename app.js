@@ -30,6 +30,11 @@ import { createClient } from '@neondatabase/neon-js';
     return { id: row.id, date: row.date, type: row.workout_type, duration: Number(row.duration), notes: row.notes || '', createdAt: new Date(row.created_at).getTime() || 0 };
   }
 
+  function sessionFrom(result) {
+    const candidates = [result?.data?.session, result?.data, result?.session, result];
+    return candidates.find((candidate) => candidate?.user) || null;
+  }
+
   async function loadWorkouts() {
     const { data, error } = await neon.from('workouts')
       .select('id,date,workout_type,duration,notes,created_at')
@@ -254,17 +259,15 @@ import { createClient } from '@neondatabase/neon-js';
         ? await neon.auth.signUp.email({ email: data.get('email'), password: data.get('password'), name: String(data.get('email')).split('@')[0] })
         : await neon.auth.signIn.email({ email: data.get('email'), password: data.get('password') });
       if (result?.error) throw result.error;
+      const session = sessionFrom(await neon.auth.getSession());
       if (creatingAccount) {
-        const sessionResult = await neon.auth.getSession();
-        const session = sessionResult?.data?.session || sessionResult?.session || sessionResult?.data || sessionResult;
-        if (!session?.user && !sessionResult?.user) {
+        if (!session) {
           creatingAccount = false;
           showSignIn('Account created. Sign in to continue.');
           return;
         }
       }
-      const sessionResult = await neon.auth.getSession();
-      const session = sessionResult?.data?.session || sessionResult?.session || sessionResult?.data || sessionResult;
+      if (!session) throw new Error('Sign-in completed, but Neon did not return an active session. Please try again.');
       await startSession(session);
       authForm.reset();
     } catch (error) {
@@ -305,7 +308,7 @@ import { createClient } from '@neondatabase/neon-js';
     $('#configHelp').hidden = false;
   } else {
     neon.auth.getSession()
-      .then((result) => startSession(result?.data?.session || result?.session || result?.data || result))
+      .then((result) => startSession(sessionFrom(result)))
       .catch((error) => { console.error('Could not check sign-in:', error); showSignIn('Could not connect to Neon Auth. Check the configured Auth URL.'); });
   }
 })();
