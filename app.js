@@ -189,6 +189,34 @@ import { createClient } from '@neondatabase/neon-js';
     $('#hoursStat').textContent = minutes === 0 ? '0' : minutes < 600 ? (minutes / 60).toFixed(1) : String(Math.floor(minutes / 60));
   }
 
+  function renderMonthlyChart() {
+    const today = localToday();
+    const months = Array.from({ length: 12 }, (_, index) => new Date(today.getFullYear(), today.getMonth() - 11 + index, 1));
+    const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const counts = new Map();
+    for (const workout of workouts) counts.set(workout.date.slice(0, 7), (counts.get(workout.date.slice(0, 7)) || 0) + 1);
+    const monthlyCounts = months.map((month) => counts.get(monthKey(month)) || 0);
+    const maxCount = Math.max(1, ...monthlyCounts);
+    const chart = $('#monthlyChart');
+    chart.innerHTML = '';
+    months.forEach((month, index) => {
+      const count = monthlyCounts[index];
+      const monthName = month.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+      const column = document.createElement('div');
+      column.className = 'month-bar-column';
+      column.setAttribute('role', 'listitem');
+      column.setAttribute('aria-label', `${monthName}: ${count} workout${count === 1 ? '' : 's'}`);
+      column.innerHTML = '<span class="month-bar-value"></span><span class="month-bar-track" aria-hidden="true"><span class="month-bar-fill"></span></span><span class="month-bar-label"></span>';
+      column.querySelector('.month-bar-value').textContent = count;
+      column.querySelector('.month-bar-label').textContent = month.toLocaleDateString(undefined, { month: 'short' });
+      column.querySelector('.month-bar-fill').style.height = count ? `${Math.max(6, (count / maxCount) * 100)}%` : '0';
+      chart.append(column);
+    });
+    const firstMonth = months[0].toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+    const lastMonth = months[months.length - 1].toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+    $('#monthlyPeriod').textContent = `${firstMonth} — ${lastMonth}`;
+  }
+
   function renderRecent() {
     const list = $('#recentList');
     const heading = $('.activity-card .card-heading h2');
@@ -229,7 +257,7 @@ import { createClient } from '@neondatabase/neon-js';
     }
   }
 
-  function render() { renderHeatmap(); renderStats(); renderRecent(); }
+  function render() { renderHeatmap(); renderStats(); renderMonthlyChart(); renderRecent(); }
   function openDialog(date = dateKey(localToday())) {
     $('#workoutDate').value = date;
     $('#workoutDate').max = dateKey(localToday());

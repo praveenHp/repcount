@@ -8,3 +8,12 @@
 .weekday-labels{grid-template-rows:repeat(7,12px);grid-auto-rows:12px;align-content:start;gap:4px}
 .weekday-labels span{display:flex;align-items:center;height:12px;line-height:12px}
 .heatmap{grid-template-rows:repeat(7,12px);grid-auto-columns:12px;gap:4px}
+
+.monthly-card{margin-top:17px;padding:24px 25px;background:var(--white);border:1px solid #edf0ea;border-radius:11px}
+.monthly-chart{height:178px;margin-top:20px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(4px,1vw,12px);align-items:stretch}
+.month-bar-column{min-width:0;height:100%;display:grid;grid-template-rows:14px minmax(0,1fr) 16px;gap:5px}
+.month-bar-value{overflow:hidden;text-align:center;color:#68796a;font:600 10px/14px var(--display)}
+.month-bar-track{width:100%;height:100%;display:flex;align-items:flex-end;overflow:hidden;border-radius:4px;background:#f2f5f0}
+.month-bar-fill{display:block;width:100%;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,#79ad7c,#367d4a);transition:height .2s ease}
+.month-bar-label{overflow:hidden;text-align:center;color:#7d877d;font-size:9px;line-height:16px}
+@media(max-width:560px){.monthly-card{padding:18px 14px}.monthly-chart{gap:4px}.month-bar-label{font-size:8px}.month-bar-value{font-size:9px}}
