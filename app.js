@@ -150,6 +150,7 @@ import { createClient } from '@neondatabase/neon-js';
           showAll = false;
           renderHeatmap();
           renderRecent();
+          if (!activity.sessions) openDialog(key);
         });
         heatmap.append(cell);
       }
