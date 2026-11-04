@@ -244,8 +244,9 @@ import { createClient } from '@neondatabase/neon-js';
   $('#authForm').addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!neon) return;
+    const authForm = event.currentTarget;
     const submit = $('#authSubmit');
-    const data = new FormData(event.currentTarget);
+    const data = new FormData(authForm);
     submit.disabled = true;
     $('#authError').textContent = '';
     try {
@@ -265,7 +266,7 @@ import { createClient } from '@neondatabase/neon-js';
       const sessionResult = await neon.auth.getSession();
       const session = sessionResult?.data?.session || sessionResult?.session || sessionResult?.data || sessionResult;
       await startSession(session);
-      event.currentTarget.reset();
+      authForm.reset();
     } catch (error) {
       $('#authError').textContent = error.message || 'Could not sign in. Check your details and try again.';
     } finally {
