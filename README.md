@@ -4,8 +4,8 @@ A small workout consistency tracker built with plain HTML, CSS, and JavaScript. 
 
 ## Local setup
 
-1. Create a Neon project and enable **Managed Better Auth** and the **Data API** for its main branch.
-2. Run [`neon/schema.sql`](neon/schema.sql) once in the Neon SQL editor. It creates the workout table and policies that restrict every operation to the signed-in account.
+1. Create a Neon project. On the branch and database your app will use, enable **Managed Better Auth** as the Data API's authentication provider, then enable the **Data API**. Neon installs the `pg_session_jwt` extension when the Data API is enabled; it provides the `auth.user_id()` function used by the SQL policies. If SQL reports `schema "auth" does not exist`, check that the Data API is enabled for the same branch and database where you opened the SQL editor. Do not create the `auth` schema manually or install the extension yourself.
+2. Run [`neon/schema.sql`](neon/schema.sql) once in that branch/database's Neon SQL editor. It creates the workout table and policies that restrict every operation to the signed-in account.
 3. Copy `.env.example` to `.env.local` and set `VITE_NEON_AUTH_URL` and `VITE_NEON_DATA_API_URL` to the endpoint URLs shown for your Neon branch. Use the URLs only; never add a database connection string or secret key to the frontend.
 4. Add `http://localhost:5173` as a trusted origin in Neon Auth.
 5. Run `npm install`, then `npm run dev`.

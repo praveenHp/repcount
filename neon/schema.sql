@@ -1,4 +1,7 @@
--- Create this table in your Neon SQL editor after enabling Neon Auth and Data API.
+-- Run this in the SQL editor for the same Neon branch/database where both
+-- Managed Better Auth and the Data API are enabled. Enabling the Data API
+-- installs pg_session_jwt, which provides auth.user_id(). Do not create the
+-- auth schema or install pg_session_jwt manually.
 create table if not exists public.workouts (
   id uuid primary key default gen_random_uuid(),
   user_id text not null default auth.user_id(),
